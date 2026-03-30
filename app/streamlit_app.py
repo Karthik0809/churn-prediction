@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import pickle
 import sys
 from pathlib import Path
@@ -145,6 +146,9 @@ def main() -> None:
     )
 
     pipe = _load_pipeline()
+
+    _sha = next((os.environ.get(k) for k in ("GITHUB_SHA", "COMMIT_SHA", "SOURCE_VERSION") if os.environ.get(k)), "")
+    st.sidebar.caption(f"App build: Streamlit {st.__version__}" + (f" · `{_sha[:7]}`" if _sha else ""))
 
     st.sidebar.markdown("### Project overview")
     st.sidebar.caption(
