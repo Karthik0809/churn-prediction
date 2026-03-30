@@ -104,6 +104,12 @@ def main() -> None:
     )
 
     st.set_page_config(page_title="Churn Prediction System", layout="wide")
+    # Streamlit 1.19 + newer pandas/pyarrow can fail on LargeUtf8 Arrow dtypes.
+    # Use legacy serialization for cloud compatibility.
+    try:
+        st.set_option("global.dataFrameSerialization", "legacy")
+    except Exception:
+        pass
     st.title("Customer Churn Prediction System")
     st.markdown("*Predict, explain, and export high-risk customers*")
     st.info(
@@ -287,7 +293,7 @@ def main() -> None:
             ax.set_title("Top SHAP Drivers")
             ax.set_xlabel("mean(|SHAP value|)")
             plt.tight_layout()
-        st.pyplot(fig, use_container_width=True)
+        st.pyplot(fig)
         plt.clf()
 
         st.subheader("Customer-level explanation (top SHAP drivers)")
