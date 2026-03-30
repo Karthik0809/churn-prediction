@@ -104,12 +104,14 @@ Recommended threshold for recall-focused targeting: `0.35`.
 
 ## Tableau Export
 
-Workbook: `dashboard/exports/tableau_exports.xlsx`
+Tableau data workbook: `dashboard/exports/tableau_exports.xlsx`
+
+Tableau dashboard workbook location: `dashboard/Customer Churn Prediction.twb`
 
 Final Tableau structure:
 - Dashboard 1: KPI Overview
-- Dashboard 2: Churn Drivers (Contract + Tenure)
-- Dashboard 3: Retention Action Layer (Support + Top Segments)
+- Dashboard 2: Churn Drivers: Contract & Tenure Analysis
+- Dashboard 3: Retention Action Layer: Service Gaps & High-Risk Segments
 - Story: 3-point narrative
 
 ## Data Note
