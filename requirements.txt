@@ -6,5 +6,6 @@ shap
 matplotlib
 seaborn
 streamlit
+altair<5
 sqlalchemy
 openpyxl
