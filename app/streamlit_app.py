@@ -105,13 +105,23 @@ def _format_cell_plain(val: object) -> str:
 
 
 def _plain_text_table(headers: list[str], rows: list[list[str]]) -> str:
-    """Monospace table as a single string (no pandas / HTML / Arrow)."""
+    """ASCII grid table (no pandas / HTML / Arrow) — clear cell borders in monospace."""
+    if not headers:
+        return ""
     all_rows = [headers] + rows
-    widths = [max(len(row[i]) for row in all_rows) for i in range(len(headers))]
-    lines = ["  ".join(h.ljust(widths[i]) for i, h in enumerate(headers))]
-    lines.append("  ".join("-" * widths[i] for i in range(len(headers))))
+    n = len(headers)
+    widths = [max(len(str(row[i])) for row in all_rows) for i in range(n)]
+
+    def _hline() -> str:
+        return "+" + "+".join("-" * (widths[i] + 2) for i in range(n)) + "+"
+
+    def _row(cells: list[str]) -> str:
+        return "|" + "|".join(f" {str(cells[i]).ljust(widths[i])} " for i in range(n)) + "|"
+
+    lines = [_hline(), _row(headers), _hline()]
     for row in rows:
-        lines.append("  ".join(row[i].ljust(widths[i]) for i in range(len(headers))))
+        lines.append(_row(row))
+    lines.append(_hline())
     return "\n".join(lines)
 
 
@@ -274,7 +284,7 @@ def main() -> None:
         table_rows: list[list[str]] = []
         for _, r in top20_df.iterrows():
             table_rows.append([_format_cell_plain(r[c]) for c in display_cols])
-        st.text(_plain_text_table(table_headers, table_rows))
+        st.code(_plain_text_table(table_headers, table_rows), language=None)
 
         st.subheader("Export high-risk customers")
         high_risk = df_out[df_out["Risk_Level"] == "High"].sort_values("Churn_Probability", ascending=False)
@@ -375,7 +385,7 @@ def main() -> None:
         shap_rows = [
             [str(feature_names[i]), f"{float(shap_vec[i]):.4f}"] for i in top_idx
         ]
-        st.text(_plain_text_table(["Feature", "SHAP value"], shap_rows))
+        st.code(_plain_text_table(["Feature", "SHAP value"], shap_rows), language=None)
 
     with tab3:
         st.subheader("EDA plot gallery")
