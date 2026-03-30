@@ -15,6 +15,13 @@ def _project_root() -> Path:
 
 def _load_pipeline() -> object:
     model_path = _project_root() / "models" / "xgb_model.pkl"
+    if not model_path.exists():
+        # Streamlit Cloud deployments start from repo files only; build missing artifacts.
+        from src.data_processing import main as build_data
+        from src.model import train_xgb
+
+        build_data()
+        train_xgb(model_out=model_path)
     with open(model_path, "rb") as f:
         return pickle.load(f)
 
