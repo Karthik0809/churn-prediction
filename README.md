@@ -7,6 +7,8 @@ End-to-end churn project that predicts at-risk customers, explains drivers, and 
 ### Streamlit App
 ![Streamlit app screenshot](assets/streamlit_app_screenshot.png)
 
+Live app: [churn-prediction-karthik.streamlit.app](https://churn-prediction-karthik.streamlit.app/)
+
 ### Tableau Dashboard
 ![Tableau dashboard screenshot](assets/tableau_dashboard.png)
 
