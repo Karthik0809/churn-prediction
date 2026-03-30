@@ -115,6 +115,17 @@ def _plain_text_table(headers: list[str], rows: list[list[str]]) -> str:
     return "\n".join(lines)
 
 
+def _st_image_compat(path: str, *, caption: str | None = None, width: int | None = None) -> None:
+    """Works across Streamlit versions (use_column_width vs use_container_width)."""
+    if width is not None:
+        st.image(path, caption=caption, width=width)
+        return
+    try:
+        st.image(path, caption=caption, use_container_width=True)
+    except TypeError:
+        st.image(path, caption=caption, use_column_width=True)
+
+
 @st.cache_resource(show_spinner=False)
 def _get_explainer_and_names(_pipe: object):
     pre = _pipe.named_steps["preprocess"]
@@ -385,14 +396,14 @@ def main() -> None:
             st.session_state["selected_eda_plot"] = selected_path
 
             # Main clean full-size view
-            st.image(selected_path, caption=selected_name, use_column_width=True)
+            _st_image_compat(selected_path, caption=selected_name)
 
             # Optional compact overview strip
             with st.expander("Show all plot thumbnails", expanded=False):
                 cols = st.columns(3)
                 for i, img in enumerate(images):
                     with cols[i % 3]:
-                        st.image(str(img), caption=img.name, width=320)
+                        _st_image_compat(str(img), caption=img.name, width=320)
 
 
 if __name__ == "__main__":
