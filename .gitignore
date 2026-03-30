@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+churn_env/
+*.pkl
+data/processed/*.db
+assets/*.png
+assets/*.txt
+dashboard/exports/
