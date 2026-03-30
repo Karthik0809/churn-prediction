@@ -227,10 +227,11 @@ def main() -> None:
         st.subheader("Top 20 highest-risk customers")
         display_cols = [c for c in ["customerID", "Contract", "MonthlyCharges", "tenure"] if c in df_out.columns]
         display_cols += ["Churn_Probability", "Risk_Level", "Predicted_Churn"]
-        st.dataframe(
-            df_out.sort_values("Churn_Probability", ascending=False).head(20)[display_cols],
-            use_container_width=True,
-        )
+        top20 = df_out.sort_values("Churn_Probability", ascending=False).head(20)[display_cols].copy()
+        # Avoid Arrow serialization issues on older Streamlit Cloud builds.
+        for col in top20.select_dtypes(include=["object"]).columns:
+            top20[col] = top20[col].astype(str)
+        st.table(top20)
 
         st.subheader("Export high-risk customers")
         high_risk = df_out[df_out["Risk_Level"] == "High"].sort_values("Churn_Probability", ascending=False)
@@ -350,7 +351,7 @@ def main() -> None:
             st.session_state["selected_eda_plot"] = selected_path
 
             # Main clean full-size view
-            st.image(selected_path, caption=selected_name, use_container_width=True)
+            st.image(selected_path, caption=selected_name, use_column_width=True)
 
             # Optional compact overview strip
             with st.expander("Show all plot thumbnails", expanded=False):
