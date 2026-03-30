@@ -8,5 +8,7 @@ churn_env/
 *.pkl
 data/processed/*.db
 assets/*.png
+!assets/streamlit_app_screenshot.png
+!assets/tableau_dashboard.png
 assets/*.txt
 dashboard/exports/
