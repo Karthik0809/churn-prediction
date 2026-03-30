@@ -300,12 +300,17 @@ def main() -> None:
         st.subheader("Customer-level explanation (top SHAP drivers)")
         if "customerID" in df_out.columns:
             risk_sorted = df_out.sort_values("Churn_Probability", ascending=False)
-            options = risk_sorted.head(300)["customerID"].astype(str).tolist()
-            selected_id = st.selectbox(
-                "Select a customerID from your uploaded file",
-                options=options,
+            candidate_rows = risk_sorted.head(300).index.tolist()
+            picked_pos = st.number_input(
+                "Select customer rank (0 = highest risk)",
+                min_value=0,
+                max_value=max(len(candidate_rows) - 1, 0),
+                value=0,
+                step=1,
             )
-            sel_row = df_out[df_out["customerID"].astype(str) == str(selected_id)].index[0]
+            sel_row = int(candidate_rows[int(picked_pos)])
+            selected_id = str(df_out.iloc[sel_row]["customerID"])
+            st.caption(f"Selected customerID: {selected_id}")
         else:
             sel_row = st.number_input(
                 "Select a row index (0-based)",
