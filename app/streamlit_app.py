@@ -228,10 +228,10 @@ def main() -> None:
         display_cols = [c for c in ["customerID", "Contract", "MonthlyCharges", "tenure"] if c in df_out.columns]
         display_cols += ["Churn_Probability", "Risk_Level", "Predicted_Churn"]
         top20 = df_out.sort_values("Churn_Probability", ascending=False).head(20)[display_cols].copy()
-        # Avoid Arrow serialization issues on older Streamlit Cloud builds.
-        for col in top20.select_dtypes(include=["object"]).columns:
+        # Avoid Arrow serialization path on older Streamlit by rendering HTML.
+        for col in top20.columns:
             top20[col] = top20[col].astype(str)
-        st.table(top20)
+        st.markdown(top20.to_html(index=False, escape=True), unsafe_allow_html=True)
 
         st.subheader("Export high-risk customers")
         high_risk = df_out[df_out["Risk_Level"] == "High"].sort_values("Churn_Probability", ascending=False)
@@ -330,7 +330,9 @@ def main() -> None:
                 "SHAP value": [float(shap_vec[i]) for i in top_idx],
             }
         )
-        st.table(top_drivers)
+        top_drivers["Feature"] = top_drivers["Feature"].astype(str)
+        top_drivers["SHAP value"] = top_drivers["SHAP value"].map(lambda x: f"{x:.4f}")
+        st.markdown(top_drivers.to_html(index=False, escape=True), unsafe_allow_html=True)
 
     with tab3:
         st.subheader("EDA plot gallery")
