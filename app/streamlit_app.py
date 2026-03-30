@@ -87,6 +87,33 @@ def _eda_image_paths() -> list[Path]:
     return sorted(eda_dir.glob("*.png"))
 
 
+def _format_cell_plain(val: object) -> str:
+    """Plain string for display — avoids Arrow-backed dtypes in Streamlit widgets."""
+    try:
+        if pd.isna(val):
+            return ""
+    except (TypeError, ValueError):
+        pass
+    if val is None:
+        return ""
+    if isinstance(val, (float, np.floating)) and np.isnan(val):
+        return ""
+    if isinstance(val, (float, np.floating)):
+        return f"{float(val):.6f}".rstrip("0").rstrip(".")
+    return str(val)
+
+
+def _plain_text_table(headers: list[str], rows: list[list[str]]) -> str:
+    """Monospace table as a single string (no pandas / HTML / Arrow)."""
+    all_rows = [headers] + rows
+    widths = [max(len(row[i]) for row in all_rows) for i in range(len(headers))]
+    lines = ["  ".join(h.ljust(widths[i]) for i, h in enumerate(headers))]
+    lines.append("  ".join("-" * widths[i] for i in range(len(headers))))
+    for row in rows:
+        lines.append("  ".join(row[i].ljust(widths[i]) for i in range(len(headers))))
+    return "\n".join(lines)
+
+
 @st.cache_resource(show_spinner=False)
 def _get_explainer_and_names(_pipe: object):
     pre = _pipe.named_steps["preprocess"]
@@ -227,11 +254,12 @@ def main() -> None:
         st.subheader("Top 20 highest-risk customers")
         display_cols = [c for c in ["customerID", "Contract", "MonthlyCharges", "tenure"] if c in df_out.columns]
         display_cols += ["Churn_Probability", "Risk_Level", "Predicted_Churn"]
-        top20 = df_out.sort_values("Churn_Probability", ascending=False).head(20)[display_cols].copy()
-        # Avoid Arrow serialization path on older Streamlit by rendering HTML.
-        for col in top20.columns:
-            top20[col] = top20[col].astype(str)
-        st.markdown(top20.to_html(index=False, escape=True), unsafe_allow_html=True)
+        top20_df = df_out.sort_values("Churn_Probability", ascending=False).head(20)
+        table_headers = display_cols
+        table_rows: list[list[str]] = []
+        for _, r in top20_df.iterrows():
+            table_rows.append([_format_cell_plain(r[c]) for c in display_cols])
+        st.text(_plain_text_table(table_headers, table_rows))
 
         st.subheader("Export high-risk customers")
         high_risk = df_out[df_out["Risk_Level"] == "High"].sort_values("Churn_Probability", ascending=False)
@@ -329,15 +357,10 @@ def main() -> None:
 
         top_k = 5
         top_idx = np.argsort(np.abs(shap_vec))[::-1][:top_k]
-        top_drivers = pd.DataFrame(
-            {
-                "Feature": [feature_names[i] for i in top_idx],
-                "SHAP value": [float(shap_vec[i]) for i in top_idx],
-            }
-        )
-        top_drivers["Feature"] = top_drivers["Feature"].astype(str)
-        top_drivers["SHAP value"] = top_drivers["SHAP value"].map(lambda x: f"{x:.4f}")
-        st.markdown(top_drivers.to_html(index=False, escape=True), unsafe_allow_html=True)
+        shap_rows = [
+            [str(feature_names[i]), f"{float(shap_vec[i]):.4f}"] for i in top_idx
+        ]
+        st.text(_plain_text_table(["Feature", "SHAP value"], shap_rows))
 
     with tab3:
         st.subheader("EDA plot gallery")
