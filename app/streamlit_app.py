@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pickle
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -11,6 +12,12 @@ import streamlit as st
 
 def _project_root() -> Path:
     return Path(__file__).resolve().parents[1]
+
+
+PROJECT_ROOT = _project_root()
+if str(PROJECT_ROOT) not in sys.path:
+    # Ensure `src` imports work when app is launched from /app on Streamlit Cloud.
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 
 def _load_pipeline() -> object:
