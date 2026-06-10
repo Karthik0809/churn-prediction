@@ -28,10 +28,18 @@ Tableau Public: [Customer Churn Prediction — From Risk Signals to Retention Ac
 - Cost ratio (FN:FP): `78x`
 
 ## Key Findings
-- Month-to-month contracts show **42.71%** churn vs **2.83%** for two-year contracts.
-- Early-tenure customers (`tenure < 12`) churn at **48.28%** vs **17.49%** for `tenure >= 12`.
-- Customers without support/security services churn far more: **TechSupport=No: 41.64% vs 15.17% (Yes)** and **OnlineSecurity=No: 41.77% vs 14.61% (Yes)**.
-- High-charge month-to-month customers (`MonthlyCharges > 65`) churn at **51.75%** and account for **63.46%** of all churners.
+
+All findings are chi-square tested (`python -m src.significance_tests`) — every one is significant far beyond p < 0.001:
+
+| Finding | Churn rates | χ² | p-value |
+|---|---|---:|---:|
+| Month-to-month vs two-year contracts | **42.71%** vs **2.83%** | 881.5 | 1.0e-193 |
+| Early tenure (<12 mo) vs established | **48.28%** vs **17.49%** | 709.1 | 3.1e-156 |
+| No TechSupport vs with TechSupport | **41.64%** vs **15.17%** | 414.3 | 4.4e-92 |
+| No OnlineSecurity vs with | **41.77%** vs **14.61%** | 433.8 | 2.4e-96 |
+| High-charge month-to-month (>$65) vs rest | **51.75%** vs **14.38%** | 1105.6 | 2.0e-242 |
+
+The high-charge month-to-month segment accounts for **63.46% of all churners** — the highest-leverage target for retention.
 
 ## Business Recommendations
 | Segment | Action | Est. Impact |
