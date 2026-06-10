@@ -16,11 +16,13 @@ Tableau Public: [Customer Churn Prediction — From Risk Signals to Retention Ac
 
 ## Latest Metrics
 
-| Metric | Value |
-|---|---:|
-| Recall (Churn) | 0.88 (threshold = 0.35) |
-| ROC-AUC | 0.8462 |
-| PR-AUC | 0.6632 |
+| Metric | Holdout | 5-Fold CV (mean ± std) |
+|---|---:|---:|
+| Recall (Churn, threshold = 0.35) | 0.88 | **0.889 ± 0.012** |
+| ROC-AUC | 0.8462 | **0.848 ± 0.011** |
+| PR-AUC | 0.6632 | **0.666 ± 0.021** |
+
+CV stability within ±0.02 across all folds — the holdout numbers are not a lucky split.
 
 ### Business Cost Framing
 - Cost of missing one churner: `$777/yr`
@@ -40,6 +42,21 @@ All findings are chi-square tested (`python -m src.significance_tests`) — ever
 | High-charge month-to-month (>$65) vs rest | **51.75%** vs **14.38%** | 1105.6 | 2.0e-242 |
 
 The high-charge month-to-month segment accounts for **63.46% of all churners** — the highest-leverage target for retention.
+
+## Survival Analysis (Kaplan-Meier)
+
+Time-to-churn analysis treating tenure as duration and churn as the event (`python -m src.survival_analysis`):
+
+![Kaplan-Meier curves](assets/eda/kaplan_meier_by_contract.png)
+
+- **Month-to-month cohorts reach 50% attrition by month 35**; one-year and two-year cohorts never drop below 50% within the 72-month observation window
+- The steepest survival drop is in the **first 12 months** of month-to-month contracts — consistent with the early-tenure churn finding and justifying onboarding-focused retention
+
+## Interactive Threshold & ROI Analysis
+
+The Streamlit app includes a **Threshold & ROI** tab:
+- **Precision-recall trade-off curves** with a live threshold marker — business users can see exactly what changing the cutoff does to catch-rate vs offer waste
+- **What-if campaign simulator**: target the top-N highest-risk customers, set an offer acceptance rate, and get expected customers saved, net annual benefit, and campaign ROI
 
 ## Business Recommendations
 | Segment | Action | Est. Impact |

@@ -217,8 +217,10 @@ def main() -> None:
     # Keep a copy for display/export
     df_out = df.copy()
 
-    # Remove target if present (prediction mode)
+    # Remove target if present (prediction mode) — keep a copy for threshold analysis
+    y_true = None
     if "Churn" in df.columns:
+        y_true = (df["Churn"].astype(str).str.strip().str.lower().isin(["yes", "1", "true"])).astype(int).values
         df = df.drop(columns=["Churn"])
         df_out = df_out.drop(columns=["Churn"], errors="ignore")
 
@@ -252,7 +254,9 @@ def main() -> None:
 
     explainer, feature_names, pre, _model = _get_explainer_and_names(pipe)
 
-    tab1, tab2, tab3 = st.tabs(["Predictions", "Explainability (SHAP)", "EDA Plots"])
+    tab1, tab2, tab3, tab4 = st.tabs(
+        ["Predictions", "Explainability (SHAP)", "EDA Plots", "Threshold & ROI"]
+    )
 
     with tab1:
         st.markdown(
@@ -414,6 +418,72 @@ def main() -> None:
                 for i, img in enumerate(images):
                     with cols[i % 3]:
                         _st_image_compat(str(img), caption=img.name, width=320)
+
+    with tab4:
+        _threshold_roi_tab(y_true, proba, df_out, threshold, avg_monthly, retention_cost)
+
+
+def _threshold_roi_tab(y_true, proba, df_out, threshold, avg_monthly, retention_cost) -> None:
+    import matplotlib.pyplot as plt
+    from sklearn.metrics import precision_recall_curve
+
+    st.subheader("Precision-Recall trade-off")
+    if y_true is None:
+        st.info(
+            "Upload a CSV that includes the `Churn` column to see the precision-recall "
+            "trade-off on your data. The what-if simulator below works either way."
+        )
+    else:
+        precision, recall, thresholds = precision_recall_curve(y_true, proba)
+        fig, axes = plt.subplots(1, 2, figsize=(12, 4.2))
+
+        axes[0].plot(recall, precision, color="#1f77b4", lw=2)
+        idx = int(np.argmin(np.abs(thresholds - threshold))) if len(thresholds) else 0
+        axes[0].scatter([recall[idx]], [precision[idx]], color="#d62728", zorder=5, s=60,
+                        label=f"threshold={threshold:.2f}")
+        axes[0].set_xlabel("Recall"); axes[0].set_ylabel("Precision")
+        axes[0].set_title("Precision-Recall curve"); axes[0].legend(); axes[0].grid(alpha=0.3)
+
+        axes[1].plot(thresholds, precision[:-1], label="Precision", color="#2ca02c", lw=2)
+        axes[1].plot(thresholds, recall[:-1], label="Recall", color="#1f77b4", lw=2)
+        axes[1].axvline(threshold, color="#d62728", ls="--", label=f"current ({threshold:.2f})")
+        axes[1].set_xlabel("Decision threshold"); axes[1].set_ylabel("Score")
+        axes[1].set_title("Precision & Recall vs threshold"); axes[1].legend(); axes[1].grid(alpha=0.3)
+        plt.tight_layout()
+        st.pyplot(fig)
+        plt.close(fig)
+        st.caption(
+            f"At threshold {threshold:.2f}: recall {recall[idx]:.2f}, precision {precision[idx]:.2f}. "
+            "Lower thresholds catch more churners but send more unnecessary offers."
+        )
+
+    st.subheader("What-if retention campaign simulator")
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        top_n = st.slider("Target top N highest-risk customers", 50, min(2000, len(proba)), 500, 50)
+    with c2:
+        success_rate = st.slider("Offer acceptance rate (%)", 5, 80, 30, 5) / 100.0
+    with c3:
+        annual_value = st.number_input("Annual value per saved customer ($)", value=float(avg_monthly) * 12)
+
+    top_idx = np.argsort(proba)[::-1][:top_n]
+    expected_churners = float(proba[top_idx].sum())
+    expected_saved = expected_churners * success_rate
+    saved_revenue = expected_saved * annual_value
+    campaign_cost = top_n * float(retention_cost)
+    net = saved_revenue - campaign_cost
+    roi = (net / campaign_cost * 100) if campaign_cost > 0 else 0.0
+
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Expected churners in target group", f"{expected_churners:,.0f}")
+    m2.metric("Expected customers saved", f"{expected_saved:,.0f}")
+    m3.metric("Net annual benefit", f"${net:,.0f}")
+    m4.metric("Campaign ROI", f"{roi:,.0f}%")
+    st.caption(
+        f"Targeting the top {top_n:,} customers by churn probability: expected churners are the sum of "
+        f"model probabilities in the group; at a {success_rate:.0%} offer-acceptance rate the campaign "
+        f"saves ~{expected_saved:,.0f} customers worth ${saved_revenue:,.0f}/yr against ${campaign_cost:,.0f} cost."
+    )
 
 
 if __name__ == "__main__":
