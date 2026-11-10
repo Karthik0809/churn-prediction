@@ -90,7 +90,7 @@ google-auth-oauthlib==1.0.0
 google-generativeai==0.8.5
 google-pasta==0.2.0
 googleapis-common-protos==1.70.0
-gradio==5.47.0
+gradio==6.16.0
 gradio_client==1.13.2
 graphene==3.4.3
 graphql-core==3.2.12
