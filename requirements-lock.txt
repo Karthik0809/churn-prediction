@@ -45,7 +45,7 @@ curl_cffi==0.13.0
 cycler==0.12.1
 databricks-sdk==0.73.0
 dataclasses-json==0.6.7
-datasets==4.7.0
+datasets==5.0.1
 debugpy==1.8.20
 decorator==5.2.1
 deep-translator==1.11.4
