@@ -51,7 +51,7 @@ decorator==5.2.1
 deep-translator==1.11.4
 defusedxml==0.7.1
 Deprecated==1.2.18
-diffusers==0.36.0
+diffusers==0.38.0
 dill==0.4.0
 dirtyjson==1.0.8
 distro==1.9.0
